@@ -40,14 +40,137 @@
   }
   function hideLoading() { $("loading-screen").classList.add("hidden"); }
 
-  function showModal(title, body, button = "Got it") {
+  // ------------------------------------------------------------------
+  // Avisos: guía (coach), toast, tarjeta del índice y modal de error
+  // ------------------------------------------------------------------
+  const ICON = {
+    x: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>',
+    polygon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3 21 9.5 17.5 20h-11L3 9.5z"/><circle cx="12" cy="3" r="1.2" fill="currentColor"/><circle cx="21" cy="9.5" r="1.2" fill="currentColor"/><circle cx="17.5" cy="20" r="1.2" fill="currentColor"/><circle cx="6.5" cy="20" r="1.2" fill="currentColor"/><circle cx="3" cy="9.5" r="1.2" fill="currentColor"/></svg>',
+    plot: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>',
+    click: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h3M12 3v3M7.8 7.8 5.6 5.6M16.2 7.8l2.2-2.2M7.8 16.2l-2.2 2.2M12 12l9 3-4 2-2 4z"/></svg>',
+    alert: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>',
+    check: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg>',
+  };
+  const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  // Preferencias del usuario ("Don't show again"); si el navegador no deja guardar, se ignora
+  const prefs = {
+    get(k) { try { return localStorage.getItem(`monitoreo:${k}`) === "1"; } catch { return false; } },
+    set(k) { try { localStorage.setItem(`monitoreo:${k}`, "1"); } catch { /* sin almacenamiento */ } },
+  };
+
+  // --- Guía sobre el mapa (no bloquea) ---
+  function showCoach(key, icon, title, steps) {
+    const box = $("coach");
+    if (prefs.get(`hide-${key}`)) { box.classList.add("hidden"); return; }
+    box.innerHTML = `
+      <div class="badge-icon accent">${ICON[icon]}</div>
+      <div class="coach-body">
+        <p class="coach-title">${esc(title)}</p>
+        <ol class="coach-steps">${steps.map((t) => `<li>${t}</li>`).join("")}</ol>
+        <div class="coach-foot">
+          <label class="coach-check"><input type="checkbox" id="coach-hide"> Don't show again</label>
+          <button class="btn btn-sm" id="coach-ok">Got it</button>
+        </div>
+      </div>
+      <button class="icon-btn" id="coach-x" aria-label="Close">${ICON.x}</button>`;
+    const close = () => {
+      if ($("coach-hide").checked) prefs.set(`hide-${key}`);
+      hideCoach();
+    };
+    $("coach-ok").onclick = close;
+    $("coach-x").onclick = close;
+    L.DomEvent.disableClickPropagation(box);
+    box.classList.remove("hidden", "leaving");
+  }
+  function hideCoach() {
+    const box = $("coach");
+    if (box.classList.contains("hidden")) return;
+    box.classList.add("leaving");
+    setTimeout(() => box.classList.add("hidden"), 160);
+  }
+
+  // --- Aviso rápido (se va solo) ---
+  function toast(html, { type = "warning", icon = "click", ms = 3500 } = {}) {
+    const zone = $("toast-zone");
+    zone.querySelectorAll(".toast").forEach((t) => t.remove()); // uno a la vez
+    const el = document.createElement("div");
+    el.className = `toast ${type}`;
+    el.innerHTML = `<span class="toast-icon">${ICON[icon]}</span><span>${html}</span>`;
+    zone.appendChild(el);
+    setTimeout(() => { el.classList.add("leaving"); setTimeout(() => el.remove(), 200); }, ms);
+  }
+
+  function pulseModeButtons() {
+    for (const id of ["btn-lote", "btn-poligono"]) {
+      const b = $(id);
+      b.classList.remove("pulse");
+      void b.offsetWidth; // reinicia la animación
+      b.classList.add("pulse");
+    }
+  }
+
+  // --- Modal: solo para errores ---
+  $("modal-icon").innerHTML = ICON.alert;
+  $("modal-x").innerHTML = ICON.x;
+  let modalAction = null;
+  function showError(title, body, { action = null, onAction = null } = {}) {
     $("modal-title").textContent = title;
     $("modal-body").textContent = body;
-    $("modal-close").textContent = button;
+    const btn = $("modal-action");
+    modalAction = onAction;
+    btn.textContent = action || "";
+    btn.classList.toggle("hidden", !action);
     $("modal").classList.remove("hidden");
+    (action ? btn : $("modal-close")).focus();
   }
-  $("modal-close").onclick = () => $("modal").classList.add("hidden");
-  $("modal").onclick = (e) => { if (e.target.id === "modal") $("modal").classList.add("hidden"); };
+  function closeModal() { $("modal").classList.add("hidden"); }
+  $("modal-close").onclick = closeModal;
+  $("modal-x").onclick = closeModal;
+  $("modal-action").onclick = () => { closeModal(); if (modalAction) modalAction(); };
+  $("modal").onclick = (e) => { if (e.target.id === "modal") closeModal(); };
+
+  // --- Tarjeta de información del índice (botón ⓘ) ---
+  function renderInfoPop() {
+    const cfg = INDICES[state.index];
+    const { displayIsClass } = layersFor(state.index);
+    let scale;
+    if (displayIsClass && cfg.classes) {
+      scale = `<div class="pop-classes">${cfg.classes.map((c, i) =>
+        `<span class="pop-class"><i style="background:${cfg.palette[i]}"></i>${esc(c)}</span>`).join("")}</div>`;
+    } else {
+      const lo = cfg.bins[0], hi = cfg.bins[cfg.bins.length - 1];
+      scale = `<div class="pop-bar" style="background:linear-gradient(to right, ${cfg.palette.join(",")})"></div>
+        <div class="pop-bar-labels"><span>${lo}</span><span>${hi}</span></div>`;
+    }
+    $("info-pop").innerHTML = `
+      <div class="pop-head">
+        <div><span class="pop-abbr">${esc(state.index)}</span><span class="pop-name">${esc(cfg.name || "")}</span></div>
+        <button class="icon-btn" id="pop-x" aria-label="Close">${ICON.x}</button>
+      </div>
+      <p class="pop-desc">${esc(cfg.info)}</p>
+      ${scale}`;
+    $("pop-x").onclick = hideInfoPop;
+  }
+  function toggleInfoPop() {
+    const pop = $("info-pop");
+    if (!pop.classList.contains("hidden")) return hideInfoPop();
+    renderInfoPop();
+    pop.classList.remove("hidden");
+    $("btn-info").setAttribute("aria-expanded", "true");
+  }
+  function hideInfoPop() {
+    $("info-pop").classList.add("hidden");
+    $("btn-info").setAttribute("aria-expanded", "false");
+  }
+  document.addEventListener("click", (e) => {
+    const pop = $("info-pop");
+    if (!pop.classList.contains("hidden") && !pop.contains(e.target) && e.target.id !== "btn-info") hideInfoPop();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    closeModal(); hideInfoPop(); hideCoach();
+  });
 
   async function fetchJSON(path) {
     const r = await fetch(`${CONFIG.DATA_URL}/${path}`, { cache: "no-cache" });
@@ -112,7 +235,7 @@
   }
 
   // ------------------------------------------------------------------
-  // Lectura de GeoTIFF (equivale a terra::rast)
+  // Lectura de GeoTIFF 
   // ------------------------------------------------------------------
   function loadRaster(layer, date) {
     const url = `${CONFIG.DATA_URL}/${state.sensor}/${layer}/${date}.tif`;
@@ -377,7 +500,7 @@
       setLegend(legendHtml);
     } catch (err) {
       console.error(err);
-      showModal("Error", `The map could not be loaded: ${err.message}`, "Close");
+      showError("The map couldn't load", `Try again in a moment. Details: ${err.message}`);
     } finally {
       hideLoading();
     }
@@ -386,8 +509,6 @@
   // ------------------------------------------------------------------
   // Selección por lote / polígono 
   // ------------------------------------------------------------------
-  let shownLoteHelp = false, shownPolyHelp = false;
-
   function setMode(mode) {
     state.mode = mode;
     state.selectedLotes = [];
@@ -399,28 +520,51 @@
     $("btn-poligono").classList.toggle("active", mode === "poligono");
     updateLoteInfo();
 
-    if (mode === "lote" && !shownLoteHelp) {
-      showModal("Instructions to select plots", "Click on a plot to select it. You can select up to two plots for simultaneous analysis.");
-      shownLoteHelp = true;
+    if (mode === "lote") {
+      showCoach("lote", "plot", "Select plots", [
+        "Click a plot on the map",
+        "Click a second plot to compare them",
+        "A third click replaces the oldest selection",
+      ]);
     }
     if (mode === "poligono") {
-      if (!shownPolyHelp) {
-        showModal("Instruction to draw the polygon", "Click on the map to add vertices. Click the first point (or 'Finish') to close the polygon.");
-        shownPolyHelp = true;
-      }
+      showCoach("poligono", "polygon", "Draw an area", [
+        "Click on the map to add points",
+        "Click the <b>first point</b> to close the shape",
+      ]);
       startDrawing();
     }
+    if (mode === null) hideCoach();
     refreshAnalysis();
   }
+
+  // Textos del cursor mientras se dibuja
+  L.drawLocal.draw.handlers.polygon.tooltip = {
+    start: "Click to place the first point",
+    cont: "Click to add another point",
+    end: "Click the first point to close",
+  };
+  L.drawLocal.draw.handlers.polyline.error = "<strong>Lines can't cross each other</strong>";
+
+  const vertexIcon = new L.DivIcon({ className: "vertex", iconSize: new L.Point(10, 10) });
 
   function startDrawing() {
     drawHandler = new L.Draw.Polygon(map, {
       allowIntersection: false,
-      showArea: true,
-      shapeOptions: { color: "#9D25E5", weight: 2, fillOpacity: 0.1 },
+      showArea: false,
+      icon: vertexIcon,
+      touchIcon: vertexIcon, // en pantallas táctiles Leaflet.draw usaría cuadros de 20 px
+      guidelineDistance: 10,
+      shapeOptions: { color: "#9D25E5", weight: 2, fillColor: "#9D25E5", fillOpacity: 0.12 },
     });
     drawHandler.enable();
   }
+
+  // Resaltar el primer punto (ahí se cierra el polígono)
+  map.on(L.Draw.Event.DRAWVERTEX, (e) => {
+    const markers = e.layers.getLayers();
+    markers.forEach((m, i) => m._icon && m._icon.classList.toggle("vertex-first", i === 0 && markers.length > 1));
+  });
 
   map.on(L.Draw.Event.CREATED, (e) => {
     polygonLayer.clearLayers();
@@ -429,12 +573,14 @@
     ring.push(ring[0]);
     state.polygon = ring;
     drawHandler = null;
+    hideCoach();
     refreshAnalysis();
   });
 
   function onLoteClick(id) {
     if (state.mode === null) {
-      showModal("Select an analysis mode", "You must choose either 'Select by Plot' or 'Draw Polygon' before interacting with the map.", "OK");
+      toast("Choose <b>Select by Plot</b> or <b>Draw Polygon</b> first");
+      pulseModeButtons();
       return;
     }
     if (state.mode !== "lote") return;
@@ -444,6 +590,7 @@
     }
     drawSelected();
     updateLoteInfo();
+    if (state.selectedLotes.length === 2) hideCoach();
     refreshAnalysis();
   }
 
@@ -537,7 +684,7 @@
 
   $("btn-descargar").onclick = () => {
     const t = state.lastTable;
-    if (!t) { showModal("Error", "No data to download. Select a plot or draw a polygon.", "Close"); return; }
+    if (!t) { toast("Select a plot or draw a polygon to download data", { type: "info" }); return; }
     const csv = [t.columns, ...t.rows.map((r) => [r[0], ...r.slice(1).map((v) => (Number.isNaN(v) ? "" : v))])]
       .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
       .join("\n");
@@ -684,11 +831,18 @@
       const series = await seriesForSelection();
       if (token !== analysisToken) return;
       renderTable(series);
+      if (state.mode === "poligono" && series.every((s) => !s.points.length)
+          && datesInRange(layersFor(state.index).analysis).length) {
+        hideLoading();
+        showError("No data in this area",
+          "The polygon doesn't cover any plot with valid pixels in the selected dates. Draw it again over the plots.",
+          { action: "Draw again", onAction: () => setMode("poligono") });
+      }
       if (state.chartType === "ts") renderTimeSeries(series);
       else await renderHistogram();
     } catch (err) {
       console.error(err);
-      showModal("Error", `The analysis could not be completed: ${err.message}`, "Close");
+      showError("The analysis couldn't finish", `Try again in a moment. Details: ${err.message}`);
     } finally {
       if (token === analysisToken) hideLoading();
     }
@@ -743,9 +897,13 @@
       setTimeout(() => b.classList.remove("flash"), 500);
       setMode(state.mode); // limpia la selección y mantiene el modo
     };
-    $("btn-info").onclick = () => showModal(`Information about ${state.index}`, INDICES[state.index].info, "Close");
+    $("btn-info").onclick = (e) => { e.stopPropagation(); toggleInfoPop(); };
     $("sensor").onchange = onSensorChange;
-    $("indice").onchange = (e) => { state.index = e.target.value; updateRaster(); refreshAnalysis(); };
+    $("indice").onchange = (e) => {
+      state.index = e.target.value;
+      if (!$("info-pop").classList.contains("hidden")) renderInfoPop();
+      updateRaster(); refreshAnalysis();
+    };
     $("toggle-raster").onchange = (e) => { state.showRaster = e.target.checked; updateRaster(); };
     const onDate = () => {
       let a = $("fecha-inicio").value, b = $("fecha-fin").value;
@@ -788,7 +946,7 @@
     } catch (err) {
       console.error(err);
       hideLoading();
-      showModal("Error", `Data could not be loaded (${err.message}). Check that the data/ folder was published.`, "Close");
+      showError("The data couldn't load", `Check that the latest data Release was published. Details: ${err.message}`);
     }
   }
 
