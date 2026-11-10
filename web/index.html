@@ -45,7 +45,8 @@
           <label for="indice">Select index:</label>
           <select id="indice"></select>
         </div>
-        <button id="btn-info" class="btn-info" title="Index information">i</button>
+        <button id="btn-info" class="btn-info" title="Index information" aria-expanded="false" aria-controls="info-pop">i</button>
+        <div id="info-pop" class="popover hidden" role="dialog" aria-label="Index information"></div>
       </div>
 
       <label class="check"><input type="checkbox" id="toggle-raster" checked /> Show Raster</label>
@@ -60,7 +61,11 @@
 
     <!-- ============ Mapa + gráfico ============ -->
     <section class="main">
-      <div id="map"></div>
+      <div class="map-wrap">
+        <div id="map"></div>
+        <div id="coach" class="coach hidden" role="status"></div>
+        <div id="toast-zone" class="toast-zone" aria-live="polite"></div>
+      </div>
       <div id="chart-container">
         <div id="chart-toolbar">
           <label><input type="radio" name="chart-type" value="ts" checked /> 📈 Time series</label>
@@ -72,11 +77,20 @@
     </section>
   </main>
 
-  <div id="modal" class="modal hidden" role="dialog" aria-modal="true">
+  <div id="modal" class="modal hidden" role="alertdialog" aria-modal="true" aria-labelledby="modal-title">
     <div class="modal-box">
-      <h3 id="modal-title"></h3>
-      <div id="modal-body"></div>
-      <button id="modal-close" class="btn">Got it</button>
+      <button class="icon-btn modal-x" id="modal-x" aria-label="Close"></button>
+      <div class="modal-head">
+        <div class="badge-icon danger" id="modal-icon"></div>
+        <div>
+          <h3 id="modal-title"></h3>
+          <p id="modal-body"></p>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="modal-close" class="btn">Close</button>
+        <button id="modal-action" class="btn btn-primary hidden"></button>
+      </div>
     </div>
   </div>
 
