@@ -26,8 +26,10 @@ const CONFIG = {
 // analysis: capa con la que se calculan tabla, series e histograma
 // aggregate: cómo se combinan varias fechas en el mapa ("mean" o "modal")
 // smooth:   aplica Savitzky–Golay a la serie de tiempo 
+// name:     nombre completo que aparece en la tarjeta de información
 const INDICES = {
   VCI: {
+    name: "Vegetation Condition Index",
     display: "VCI_class", analysis: "VCI_class", aggregate: "modal", smooth: false,
     palette: ["#000000", "#a52a2a", "#ff0000", "#ffa500", "#ffff00", "#90ee90", "#006400"],
     classes: ["Extreme Drought", "Severe Drought", "Moderate Drought", "Mild Drought", "Normal", "Good", "Very Good"],
@@ -35,6 +37,7 @@ const INDICES = {
     info: "The Vegetation Condition Index (VCI) compares current vegetation status with historical trends to identify drought conditions.",
   },
   NDVI: {
+    name: "Normalized Difference Vegetation Index",
     display: "NDVI_class", analysis: "NDVI_raw", aggregate: "modal", smooth: true,
     palette: ["#d9230f", "#d45313", "#f2db29", "#9acd32", "#07a607", "#076907"],
     classes: ["Soil/Water", "Very Low", "Low", "Moderately Low", "Moderately High", "High"],
@@ -42,38 +45,43 @@ const INDICES = {
     info: "The Normalized Difference Vegetation Index (NDVI) is an indicator of photosynthetically active biomass, used to analyze plant health and detect abnormal growth changes.",
   },
   EVI: {
+    name: "Enhanced Vegetation Index",
     display: "EVI", analysis: "EVI", aggregate: "mean", smooth: false,
     palette: ["#d9230f", "#d45313", "#f2db29", "#9acd32", "#07a607", "#076907"],
     bins: range(-1, 1, 0.1),
     info: "The Enhanced Vegetation Index (EVI) measures canopy structure and vegetation vigor. It is optimized to better quantify greenness in areas of high biomass where NDVI may saturate.",
   },
   MSAVI: {
+    name: "Modified Soil-Adjusted Vegetation Index",
     display: "MSAVI", analysis: "MSAVI", aggregate: "mean", smooth: false,
     palette: ["#d9230f", "#d45313", "#f2db29", "#9acd32", "#07a607", "#076907"],
     bins: range(0, 1, 0.1),
     info: "The Modified Soil-Adjusted Vegetation Index (MSAVI) measures vegetation greenness while minimizing the influence of bare soil. It provides a more accurate estimate of canopy cover in areas with sparse vegetation.",
   },
   GNDVI: {
+    name: "Green Normalized Difference Vegetation Index",
     display: "GNDVI", analysis: "GNDVI", aggregate: "mean", smooth: false,
     palette: ["#d9230f", "#d45313", "#f2db29", "#9acd32", "#07a607", "#076907"],
     bins: range(-1, 1, 0.1),
     info: "The Green Normalized Difference Vegetation Index (GNDVI) uses the green band to estimate chlorophyll content, making it effective for monitoring plant stress and nutrient status.",
   },
   LAI: {
+    name: "Leaf Area Index",
     display: "LAI", analysis: "LAI", aggregate: "mean", smooth: true,
     palette: ["#A0522D", "#F4A460", "#9ACD32", "#32CD32", "#228B22", "#004d00"],
     bins: range(0, 10, 1),
     info: "The Leaf Area Index (LAI) quantifies the amount of foliage in a canopy. It is used to estimate biomass and crop health.",
   },
   GCI: {
+    name: "Green Chlorophyll Index",
     display: "GCI", analysis: "GCI", aggregate: "mean", smooth: true,
     palette: ["#A0522D", "#F4A460", "#9ACD32", "#32CD32", "#228B22", "#004d00"],
     bins: range(0, 10, 1),
     info: "The Green Chlorophyll Index (GCI) estimates chlorophyll content in vegetation, helping to assess nutritional status.",
   },
   NDWI: {
+    name: "Normalized Difference Water Index",
     display: "NDWI", analysis: "NDWI", aggregate: "mean", smooth: true,
-    // reverse = TRUE en app.R
     palette: ["#74b0d6", "#388a47", "#9fcf70", "#f5d856", "#d13415"],
     bins: range(-1, 1, 0.1),
     info: "The Normalized Difference Water Index (NDWI) is used to detect water bodies and moisture in vegetation.",
