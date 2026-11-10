@@ -102,13 +102,13 @@ const CROP_ICONS = [
   { match: ["arroz", "rice"], label: "Arroz",
     icon: '<path d="M12 21V8"/><ellipse cx="12" cy="5" rx="1.6" ry="2.6"/><ellipse cx="8.6" cy="9" rx="1.4" ry="2.4" transform="rotate(-38 8.6 9)"/><ellipse cx="15.4" cy="9" rx="1.4" ry="2.4" transform="rotate(38 15.4 9)"/><ellipse cx="8.6" cy="14" rx="1.4" ry="2.4" transform="rotate(-38 8.6 14)"/><ellipse cx="15.4" cy="14" rx="1.4" ry="2.4" transform="rotate(38 15.4 14)"/>' },
   { match: ["yuca", "cassava", "mandioc"], label: "Yuca",
-    icon: '<path d="M12 3v5M9 4.5 12 8l3-3.5"/><path d="M12 8C9 8.5 7 12 6.3 16.5c-.4 2.8 1.3 4.5 2.5 2.5C10 16.5 11 13 12 8z"/><path d="M12 8c3 .5 5 4 5.7 8.5.4 2.8-1.3 4.5-2.5 2.5C14 16.5 13 13 12 8z"/>' },
+    icon: '<path d="M12 11V3"/><path d="M12 6 8.5 3.5M12 6l3.5-2.5M12 8.5 9 7M12 8.5l3-1.5"/><path d="M3 12.5h18" stroke-dasharray="1.5 2"/><path d="M12 12.5c-.8.6-1.6 2.6-2.3 5.6M12 12.5v8M12 12.5c.8.6 1.6 2.6 2.3 5.6"/>' },
   { match: ["frij", "frjiol", "bean", "poroto"], label: "Fríjol",
-    icon: '<path d="M6.5 6.5c2.8-3.4 8.5-3.4 11.4.4 2.8 3.8 2 9.4-2.6 11.6-4.4 2.1-9.4.3-10.6-3.6-.7-2.4.6-3.9 2-4.6 1.4-.7 1.6-2-.2-3.8z"/><path d="M9.5 9.5c.8.9 1 2 .4 3"/>' },
+    icon: '<path d="M12 21v-9"/><path d="M12 12c-1-3.5-3.6-5.5-7-5.5.3 3.4 3 5.5 7 5.5zM12 12c1-3.5 3.6-5.5 7-5.5-.3 3.4-3 5.5-7 5.5z"/><path d="M12 15.5c-1.6 0-3 1-3.4 2.5M12 15.5c1.6 0 3 1 3.4 2.5"/>' },
   { match: ["pasto", "grass", "pradera"], label: "Pasto",
     icon: '<path d="M3 20h18"/><path d="M6.5 20c0-5-1.8-8-3.5-10M10 20c0-6.5 1.2-10.5 3.5-13.5M14 20c0-4.5 2-7.5 5-9.5M17.5 20c0-3 .2-5-1-7"/>' },
   { match: ["forraj", "forage", "heno"], label: "Forrajes",
-    icon: '<rect x="3" y="8" width="18" height="11" rx="2"/><path d="M3 12h18M3 15.5h18M8 8V5.5M16 8V5.5"/>' },
+    icon: '<path d="M3 21h18"/><path d="M7 21V9M12 21V4M17 21V8"/><path d="M7 9c-1.5-1-2-2.7-1.5-4.5C7 5.5 7.6 7.2 7 9zM12 4c-1.2-.8-1.5-2-1-3M12 4c1.2-.8 1.5-2 1-3M17 8c1.5-1 2-2.7 1.5-4.5C17 4.5 16.4 6.2 17 8z"/><path d="M7 15c-2-.5-3-2-3-3.5M12 13c2-.5 3-2 3-3.5M17 15c2-.5 3-2 3-3.5"/>' },
   { match: ["genet", "germopl"], label: "Recursos genéticos",
     icon: '<path d="M8 3c0 5 8 4.5 8 9s-8 4-8 9"/><path d="M16 3c0 5-8 4.5-8 9s8 4 8 9"/><path d="M9.3 6.5h5.4M9.3 17.5h5.4"/>' },
   { match: ["field", "operac"], label: "Operación de campo",
@@ -116,7 +116,7 @@ const CROP_ICONS = [
   { match: ["cimmyt", "maiz", "corn"], label: "Maíz",
     icon: '<path d="M12 3c2.8 0 4 4 4 9s-1.2 8-4 9c-2.8-1-4-4-4-9s1.2-9 4-9z"/><path d="M8.3 8.5h7.4M8 12.5h8M8.4 16.5h7.2M12 3.5v17"/><path d="M8 12c-2 2-3 5-2 9M16 12c2 2 3 5 2 9"/>' },
   { match: ["variad", "mixt"], label: "Variados",
-    icon: '<path d="M4 10h16l-2 10H6z"/><path d="M8 10l4-6 4 6"/><path d="M9.5 13.5v3.5M12 13.5v3.5M14.5 13.5v3.5"/>' },
+    icon: '<path d="M6.5 21v-6M6.5 15c-.4-2.4-1.9-3.8-4-4 .3 2.3 1.8 3.7 4 4zM6.5 15c.4-2.4 1.9-3.8 4-4-.3 2.3-1.8 3.7-4 4z"/><path d="M17.5 21v-9"/><ellipse cx="17.5" cy="6.5" rx="1.4" ry="2.4"/><ellipse cx="15" cy="10" rx="1.2" ry="2" transform="rotate(-38 15 10)"/><ellipse cx="20" cy="10" rx="1.2" ry="2" transform="rotate(38 20 10)"/>' },
   { match: ["basur", "residu"], label: "Basurero",
     icon: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v5M14 11v5"/>' },
 ];
@@ -129,4 +129,3 @@ function range(from, to, step) {
   for (let i = 0; i <= n; i++) out.push(+(from + i * step).toFixed(6));
   return out;
 }
-
