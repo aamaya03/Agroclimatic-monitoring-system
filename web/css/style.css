@@ -85,6 +85,9 @@ tr.global td { font-weight: bold; background: #f0f6ff; }
 /* ---------- Mapa ---------- */
 #map { height: 450px; border-radius: 4px; }
 .raster-overlay { image-rendering: pixelated; image-rendering: crisp-edges; }
+/* Sin recuadro de foco al hacer clic en lotes o polígonos */
+.leaflet-container .leaflet-interactive:focus,
+.leaflet-container path:focus { outline: none; }
 .legend {
   background: rgba(255, 255, 255, 0.9); padding: 8px 10px; border-radius: 5px;
   box-shadow: 0 1px 4px rgba(0,0,0,.3); line-height: 18px; font-size: 12px;
