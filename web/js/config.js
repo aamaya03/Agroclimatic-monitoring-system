@@ -69,7 +69,8 @@ const INDICES = {
     name: "Leaf Area Index",
     display: "LAI", analysis: "LAI", aggregate: "mean", smooth: true,
     palette: ["#A0522D", "#F4A460", "#9ACD32", "#32CD32", "#228B22", "#004d00"],
-    bins: range(0, 10, 1),
+    bins: range(0, 4, 0.25), // La fórmula LAI = 3.618*EVI - 0.118 llega como máximo a ~3.5
+    openTop: true,           // La última barra recoge todo lo mayor a 3.75 (nubes, artefactos)
     info: "Quantifies the amount of foliage in a canopy. It is used to estimate biomass and crop health.",
   },
   GCI: {
