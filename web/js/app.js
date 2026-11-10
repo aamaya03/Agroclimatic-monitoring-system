@@ -22,6 +22,7 @@
     selectedLotes: [],      // máx. 2 ids
     polygon: null,          // [[lng, lat], ...] anillo cerrado
     chartType: "ts",
+    showSmooth: true,       // líneas suavizadas en la serie de tiempo
     lastTable: null,        // { columns, rows } para CSV
   };
 
@@ -393,7 +394,7 @@
   // ------------
   // Mapa
   // ------------
-  const map = L.map("map", { zoomControl: true });
+  const map = L.map("map", { zoomControl: false });
   L.tileLayer(CONFIG.BASEMAP_URL, { attribution: CONFIG.BASEMAP_ATTRIBUTION, maxZoom: 19 }).addTo(map);
 
   let lotesLayer = null;
@@ -403,19 +404,26 @@
   let legendControl = null;
   let drawHandler = null;
 
-  const CenterControl = L.Control.extend({
+  // Barra única del mapa: alejar, acercar, centrar y mostrar el raster
+  const MapToolbar = L.Control.extend({
     options: { position: "topleft" },
     onAdd() {
-      const div = L.DomUtil.create("div", "leaflet-bar center-btn");
-      div.innerHTML = '<a href="#" title="Center on the plots">&#9673;</a>';
-      L.DomEvent.on(div, "click", (e) => {
-        L.DomEvent.preventDefault(e);
-        if (lotesLayer) map.fitBounds(lotesLayer.getBounds());
-      });
+      const div = L.DomUtil.create("div", "map-toolbar");
+      div.innerHTML = `
+        <button type="button" class="mt-btn" id="map-zoom-out" title="Zoom out" aria-label="Zoom out">−</button>
+        <button type="button" class="mt-btn" id="map-zoom-in" title="Zoom in" aria-label="Zoom in">+</button>
+        <button type="button" class="mt-btn mt-center" id="map-center" title="Center on the plots">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="12" r="3"/></svg>Center</button>
+        <label class="mt-raster switch"><input type="checkbox" id="toggle-raster" checked /><span class="switch-track"></span> Show Raster</label>`;
+      L.DomEvent.disableClickPropagation(div);
+      L.DomEvent.disableScrollPropagation(div);
+      div.querySelector("#map-zoom-out").onclick = () => map.zoomOut();
+      div.querySelector("#map-zoom-in").onclick = () => map.zoomIn();
+      div.querySelector("#map-center").onclick = () => { if (lotesLayer) map.fitBounds(lotesLayer.getBounds()); };
       return div;
     },
   });
-  map.addControl(new CenterControl());
+  map.addControl(new MapToolbar());
 
   function drawLotes() {
     lotesLayer = L.geoJSON(state.lotes, {
@@ -759,17 +767,21 @@
     $("chart-empty").classList.remove("hidden");
   }
 
-  // Barra del gráfico: solo el botón de descarga, con un nombre de archivo con sentido
-  function plotConfig(kind) {
-    const sensor = state.sensor;
-    return {
-      responsive: true, displaylogo: false, displayModeBar: true,
-      modeBarButtons: [["toImage"]],
-      toImageButtonOptions: {
-        format: "png", scale: 2,
-        filename: `${state.index}_${kind}_${sensor}_${state.start}_${state.end}`,
-      },
-    };
+  // Sin barra de Plotly: la descarga se hace con el botón "Download chart"
+  function plotConfig() {
+    return { responsive: true, displaylogo: false, displayModeBar: false };
+  }
+
+  // Nombre del archivo: índice, tipo de gráfico, sensor y rango de fechas
+  function chartFilename() {
+    const kind = state.chartType === "ts" ? "time_series" : "area_distribution";
+    return `${state.index}_${kind}_${state.sensor}_${state.start}_${state.end}`;
+  }
+
+  // El interruptor de suavizado solo aparece en la serie de tiempo de los índices que lo usan
+  function updateSmoothField() {
+    const show = state.chartType === "ts" && INDICES[state.index].smooth;
+    $("smooth-field").classList.toggle("hidden", !show);
   }
 
   // Estilo común de los gráficos
@@ -781,7 +793,7 @@
       hoverlabel: { bgcolor: "#fff", bordercolor: "#dfe3e8", font: { family: "Inter, Arial, sans-serif", color: "#1f2328" } },
       dragmode: false, // sin zoom ni desplazamiento al arrastrar
       ...layout,
-      title: { ...layout.title, font: { size: 15, color: "#1f2328" }, x: 0.02, xanchor: "left" },
+      title: { ...layout.title, text: `<b>${layout.title.text}</b>`, font: { size: 18, color: "#1f2328" }, x: 0.02, xanchor: "left" },
       xaxis: { ...AXIS, fixedrange: true, ...layout.xaxis },
       yaxis: { ...AXIS, fixedrange: true, ...layout.yaxis },
       legend: { orientation: "h", y: -0.2, ...layout.legend },
@@ -807,7 +819,7 @@
       const x = s.points.map((p) => p.date);
       const y = s.points.map((p) => p.mean);
       traces.push({ x, y, name: s.name, type: "scatter", mode: "lines+markers", line: { color: s.color }, marker: { color: s.color } });
-      if (cfg.smooth && y.length >= 5) {
+      if (cfg.smooth && state.showSmooth && y.length >= 5) {
         traces.push({ x, y: savitzkyGolay(y), name: `Smoothed ${s.name}`, type: "scatter", mode: "lines", line: { color: s.color, dash: "dash" } });
       }
     }
@@ -818,7 +830,7 @@
       yaxis: { title: { text: `Average ${state.index}` }, zeroline: false },
       legend: { title: { text: state.mode === "lote" ? "Plots" : "" } },
       margin: { t: 60, r: 20 },
-    }), plotConfig("time_series"));
+    }), plotConfig());
   }
 
   async function renderHistogram() {
@@ -864,7 +876,7 @@
       yaxis: { title: { text: "Area (ha)" }, rangemode: "tozero" },
       legend: { title: { text: "Plots / AOI" }, y: -0.35 },
       margin: { t: 60, b: 90, r: 20 },
-    }), plotConfig("area_distribution"));
+    }), plotConfig());
   }
 
   // ------------------------------------------------------------------
@@ -961,6 +973,7 @@
     $("indice").onchange = (e) => {
       state.index = e.target.value;
       updateSwatch();
+      updateSmoothField();
       if (!$("info-pop").classList.contains("hidden")) renderInfoPop();
       updateRaster(); refreshAnalysis();
     };
@@ -982,8 +995,17 @@
       $(id).addEventListener("click", (e) => { try { e.currentTarget.showPicker(); } catch { /* navegador sin showPicker */ } });
     }
     document.querySelectorAll('input[name="chart-type"]').forEach((r) => {
-      r.onchange = (e) => { state.chartType = e.target.value; refreshAnalysis(); };
+      r.onchange = (e) => { state.chartType = e.target.value; updateSmoothField(); refreshAnalysis(); };
     });
+    $("toggle-smooth").onchange = (e) => { state.showSmooth = e.target.checked; refreshAnalysis(); };
+    $("btn-chart-png").onclick = () => {
+      const chart = $("chart");
+      if (!chart.data || !chart.data.length) {
+        toast("Select a plot or draw a polygon to download the chart", { type: "info" });
+        return;
+      }
+      Plotly.downloadImage(chart, { format: "png", scale: 2, width: chart.offsetWidth, height: chart.offsetHeight, filename: chartFilename() });
+    };
   }
 
   // ------------------------------------------------------------------
@@ -1007,6 +1029,7 @@
       bindControls();
       fillIndexSelect();
       setupDates();
+      updateSmoothField();
       await updateRaster();
       await refreshAnalysis();
     } catch (err) {
