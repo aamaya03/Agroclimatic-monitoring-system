@@ -7,6 +7,9 @@
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -20,9 +23,9 @@
     <aside class="sidebar">
       <p class="help"><strong>Choose a mode to analyze the area:</strong></p>
       <div class="mode-buttons">
-        <button id="btn-lote" class="btn btn-mode">Select by Plot</button>
-        <button id="btn-poligono" class="btn btn-mode">Draw Polygon</button>
-        <button id="btn-borrar" class="btn">&#8634; Clear Selection</button>
+        <button id="btn-lote" class="btn btn-mode"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Select by Plot</button>
+        <button id="btn-poligono" class="btn btn-mode"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 21 9.5 17.5 20h-11L3 9.5z"/></svg>Draw Polygon</button>
+        <button id="btn-borrar" class="btn"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>Clear Selection</button>
       </div>
 
       <div class="field" id="sensor-field">
@@ -33,30 +36,29 @@
       <div class="field">
         <label>Select date range:</label>
         <div class="date-range">
-          <input type="date" id="fecha-inicio" />
+          <label class="date-pill"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span class="date-text" id="fecha-inicio-text"></span><input type="date" id="fecha-inicio" /></label>
           <span>to</span>
-          <input type="date" id="fecha-fin" />
+          <label class="date-pill"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span class="date-text" id="fecha-fin-text"></span><input type="date" id="fecha-fin" /></label>
         </div>
-        <small id="window-note" class="note"></small>
       </div>
 
       <div class="field index-row">
         <div>
           <label for="indice">Select index:</label>
-          <select id="indice"></select>
+          <div class="select-wrap"><span class="swatch" id="index-swatch"></span><select id="indice"></select></div>
         </div>
-        <button id="btn-info" class="btn-info" title="Index information" aria-expanded="false" aria-controls="info-pop">i</button>
+        <button id="btn-info" class="btn-info" title="Index information" aria-expanded="false" aria-controls="info-pop"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></button>
         <div id="info-pop" class="popover hidden" role="dialog" aria-label="Index information"></div>
       </div>
 
-      <label class="check"><input type="checkbox" id="toggle-raster" checked /> Show Raster</label>
+      <label class="check switch"><input type="checkbox" id="toggle-raster" checked /><span class="switch-track"></span> Show Raster</label>
 
-      <pre id="info-lote" class="hidden"></pre>
+      <div id="info-lote" class="lot-chips hidden"></div>
 
       <div class="table-wrap">
         <table id="tabla-resultados"></table>
       </div>
-      <button id="btn-descargar" class="btn btn-download hidden">&#11015; Download Data</button>
+      <button id="btn-descargar" class="btn btn-download hidden"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Download Data</button>
     </aside>
 
     <!-- ============ Mapa + gráfico ============ -->
@@ -68,8 +70,8 @@
       </div>
       <div id="chart-container">
         <div id="chart-toolbar">
-          <label><input type="radio" name="chart-type" value="ts" checked /> 📈 Time series</label>
-          <label><input type="radio" name="chart-type" value="hist" /> 📊 Area distribution</label>
+          <label><input type="radio" name="chart-type" value="ts" checked /><span class="seg"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="m7 15 4-5 4 3 5-7"/></svg>Time series</span></label>
+          <label><input type="radio" name="chart-type" value="hist" /><span class="seg"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6" rx="1"/><rect x="12" y="8" width="3" height="10" rx="1"/><rect x="17" y="5" width="3" height="13" rx="1"/></svg>Area distribution</span></label>
         </div>
         <div id="chart"></div>
         <div id="chart-empty" class="chart-empty">Select a plot or draw a polygon to see the chart.</div>
