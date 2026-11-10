@@ -847,7 +847,8 @@
     const nb = edges.length - 1;
     const areaRow = pixelAreaByRow(comp);
     const isVCI = state.index === "VCI" && cfg.classes;
-    const labels = isVCI ? cfg.classes : edges.slice(0, -1).map((e, i) => `${e.toFixed(2)}–${edges[i + 1].toFixed(2)}`);
+    const labels = isVCI ? cfg.classes : edges.slice(0, -1).map((e, i) =>
+      cfg.openTop && i === nb - 1 ? `${e.toFixed(2)}+` : `${e.toFixed(2)}–${edges[i + 1].toFixed(2)}`);
 
     const traces = geoms.map((g) => {
       const area = new Array(nb).fill(0);
@@ -858,7 +859,7 @@
         let b = -1;
         for (let i = 0; i < nb; i++) {
           const last = i === nb - 1;
-          if (v >= edges[i] && (v < edges[i + 1] || (last && v <= edges[i + 1]))) { b = i; break; }
+          if (v >= edges[i] && (v < edges[i + 1] || (last && (cfg.openTop || v <= edges[i + 1])))) { b = i; break; }
         }
         if (b >= 0) area[b] += areaRow[Math.floor(k / comp.width)] / 10000; // m² -> ha
       }
