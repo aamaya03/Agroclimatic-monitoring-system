@@ -34,6 +34,21 @@
   const $ = (id) => document.getElementById(id);
   const fmt = (v, d = 4) => (v == null || Number.isNaN(v) ? "" : (+v).toFixed(d));
 
+  // Fecha ISO (2026-04-23) -> texto legible (Apr 23, 2026)
+  function fmtDate(iso) {
+    if (!iso) return "";
+    const [y, m, d] = iso.split("-").map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  }
+
+  // Ícono del cultivo (CROP_ICONS en config.js)
+  function cropIcon(crop) {
+    const norm = String(crop ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    const hit = CROP_ICONS.find((c) => c.match.some((w) => norm.includes(w)));
+    const paths = hit ? hit.icon : CROP_ICON_DEFAULT;
+    return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
+  }
+
   function showLoading(text = "") {
     $("loading-text").textContent = text;
     $("loading-screen").classList.remove("hidden");
@@ -133,23 +148,12 @@
   // --- Tarjeta de información del índice (botón ⓘ) ---
   function renderInfoPop() {
     const cfg = INDICES[state.index];
-    const { displayIsClass } = layersFor(state.index);
-    let scale;
-    if (displayIsClass && cfg.classes) {
-      scale = `<div class="pop-classes">${cfg.classes.map((c, i) =>
-        `<span class="pop-class"><i style="background:${cfg.palette[i]}"></i>${esc(c)}</span>`).join("")}</div>`;
-    } else {
-      const lo = cfg.bins[0], hi = cfg.bins[cfg.bins.length - 1];
-      scale = `<div class="pop-bar" style="background:linear-gradient(to right, ${cfg.palette.join(",")})"></div>
-        <div class="pop-bar-labels"><span>${lo}</span><span>${hi}</span></div>`;
-    }
     $("info-pop").innerHTML = `
       <div class="pop-head">
         <div><span class="pop-abbr">${esc(state.index)}</span><span class="pop-name">${esc(cfg.name || "")}</span></div>
         <button class="icon-btn" id="pop-x" aria-label="Close">${ICON.x}</button>
       </div>
-      <p class="pop-desc">${esc(cfg.info)}</p>
-      ${scale}`;
+      <p class="pop-desc">${esc(cfg.info)}</p>`;
     $("pop-x").onclick = hideInfoPop;
   }
   function toggleInfoPop() {
@@ -235,7 +239,7 @@
   }
 
   // ------------------------------------------------------------------
-  // Lectura de GeoTIFF 
+  // Lectura de GeoTIFF (equivale a terra::rast)
   // ------------------------------------------------------------------
   function loadRaster(layer, date) {
     const url = `${CONFIG.DATA_URL}/${state.sensor}/${layer}/${date}.tif`;
@@ -597,10 +601,15 @@
   function updateLoteInfo() {
     const box = $("info-lote");
     if (state.mode !== "lote" || !state.selectedLotes.length) { box.classList.add("hidden"); return; }
-    box.textContent = state.selectedLotes.map((id) => {
+    box.innerHTML = state.selectedLotes.map((id, i) => {
       const p = state.lotesById.get(id).properties;
-      return `📍 Selected Plot: ${id}\n🌱 Crop: ${p[CONFIG.CROP_FIELD] ?? "—"}`;
-    }).join("\n\n");
+      const crop = p[CONFIG.CROP_FIELD] ?? "—";
+      const color = CONFIG.LOT_COLORS[i];
+      return `<div class="lot-chip" style="--chip-color:${color}">
+        <span class="crop-icon" title="${esc(crop)}">${cropIcon(crop)}</span>
+        <div><p class="lot-id">Selected Plot: <b>${esc(id)}</b></p><p class="lot-crop">Crop: ${esc(crop)}</p></div>
+      </div>`;
+    }).join("");
     box.classList.remove("hidden");
   }
 
@@ -673,9 +682,12 @@
     })];
     const rows = dates.map((d) => [d, ...series.map((s) => s.points.find((p) => p.date === d)?.mean ?? NaN)]);
 
+    const colStyle = (i) => `style="--col-color:${series[i].color}"`;
     table.innerHTML =
-      `<tr>${columns.map((c) => `<th>${c}</th>`).join("")}</tr>` +
-      `<tr class="global"><td>${globalRow[0]}</td>${globalRow.slice(1).map((v) => `<td>${fmt(v, 2)}</td>`).join("")}</tr>` +
+      `<tr><th>${columns[0]}</th>${columns.slice(1).map((c, i) =>
+        `<th class="col-lot" ${colStyle(i)}><span class="col-dot"></span>${esc(c)}</th>`).join("")}</tr>` +
+      `<tr class="global"><td>${globalRow[0]}</td>${globalRow.slice(1).map((v, i) =>
+        `<td class="col-lot" ${colStyle(i)}>${fmt(v, 2)}</td>`).join("")}</tr>` +
       rows.map((r) => `<tr><td>${r[0]}</td>${r.slice(1).map((v) => `<td>${fmt(v)}</td>`).join("")}</tr>`).join("");
 
     state.lastTable = { columns, rows: [globalRow, ...rows] };
@@ -740,10 +752,49 @@
   // ------------------------------------------------------------------
   // Gráficos (serie de tiempo e histograma de área)
   // ------------------------------------------------------------------
+  const EMPTY_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="m7 15 4-5 4 3 5-7"/></svg>';
   function chartEmpty(msg) {
     Plotly.purge("chart");
-    $("chart-empty").textContent = msg;
+    $("chart-empty").innerHTML = `${EMPTY_ICON}<span>${esc(msg)}</span>`;
     $("chart-empty").classList.remove("hidden");
+  }
+
+  // Barra del gráfico: solo el botón de descarga, con un nombre de archivo con sentido
+  function plotConfig(kind) {
+    const sensor = state.sensor;
+    return {
+      responsive: true, displaylogo: false, displayModeBar: true,
+      modeBarButtons: [["toImage"]],
+      toImageButtonOptions: {
+        format: "png", scale: 2,
+        filename: `${state.index}_${kind}_${sensor}_${state.start}_${state.end}`,
+      },
+    };
+  }
+
+  // Estilo común de los gráficos
+  const AXIS = { gridcolor: "#eef0f3", linecolor: "#dfe3e8", zerolinecolor: "#dfe3e8", tickfont: { color: "#5b6370" } };
+  function plotLayout(layout) {
+    return {
+      font: { family: "Inter, 'Helvetica Neue', Arial, sans-serif", size: 12, color: "#1f2328" },
+      paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
+      hoverlabel: { bgcolor: "#fff", bordercolor: "#dfe3e8", font: { family: "Inter, Arial, sans-serif", color: "#1f2328" } },
+      dragmode: false, // sin zoom ni desplazamiento al arrastrar
+      ...layout,
+      title: { ...layout.title, font: { size: 15, color: "#1f2328" }, x: 0.02, xanchor: "left" },
+      xaxis: { ...AXIS, fixedrange: true, ...layout.xaxis },
+      yaxis: { ...AXIS, fixedrange: true, ...layout.yaxis },
+      legend: { orientation: "h", y: -0.2, ...layout.legend },
+    };
+  }
+
+  // Con una sola fecha, dejar 3 días a cada lado para que el eje muestre fechas y no horas
+  function singleDateRange(series) {
+    const dates = new Set(series.flatMap((s) => s.points.map((p) => p.date)));
+    if (dates.size !== 1) return {};
+    const d = new Date(`${[...dates][0]}T12:00:00`);
+    const shift = (n) => new Date(d.getTime() + n * 86400000).toISOString().slice(0, 10);
+    return { range: [shift(-3), shift(3)], dtick: 86400000 };
   }
 
   function renderTimeSeries(series) {
@@ -760,13 +811,14 @@
         traces.push({ x, y: savitzkyGolay(y), name: `Smoothed ${s.name}`, type: "scatter", mode: "lines", line: { color: s.color, dash: "dash" } });
       }
     }
-    Plotly.react("chart", traces, {
+    Plotly.react("chart", traces, plotLayout({
+      hovermode: "x unified",
       title: { text: `Average ${state.index} by ${state.mode === "lote" ? "Plot" : "Area"}` },
-      xaxis: { title: { text: "Date" }, type: "date" },
+      xaxis: { title: { text: "Date" }, type: "date", tickformat: "%b %d\n%Y", ...singleDateRange(valid) },
       yaxis: { title: { text: `Average ${state.index}` }, zeroline: false },
       legend: { title: { text: state.mode === "lote" ? "Plots" : "" } },
-      margin: { t: 80 },
-    }, { responsive: true, displaylogo: false });
+      margin: { t: 60, r: 20 },
+    }), plotConfig("time_series"));
   }
 
   async function renderHistogram() {
@@ -799,20 +851,20 @@
         if (b >= 0) area[b] += areaRow[Math.floor(k / comp.width)] / 10000; // m² -> ha
       }
       return {
-        type: "bar", x: labels, y: area, name: g.name, marker: { color: g.color },
+        type: "bar", x: labels, y: area, name: g.name, marker: { color: g.color, opacity: 0.85 },
         hovertemplate: `${g.name}<br>Range: %{x}<br>Area: %{y:.2f} ha<extra></extra>`,
       };
     });
 
     $("chart-empty").classList.add("hidden");
-    Plotly.react("chart", traces, {
+    Plotly.react("chart", traces, plotLayout({
       barmode: traces.length > 1 ? "group" : "relative",
       title: { text: `Area Distribution — ${state.index}` },
       xaxis: { title: { text: isVCI ? "VCI category" : `${state.index} range` }, tickangle: -45, automargin: true, categoryorder: "array", categoryarray: labels },
       yaxis: { title: { text: "Area (ha)" }, rangemode: "tozero" },
-      legend: { title: { text: "Plots / AOI" } },
-      margin: { t: 70, b: 90 },
-    }, { responsive: true, displaylogo: false });
+      legend: { title: { text: "Plots / AOI" }, y: -0.35 },
+      margin: { t: 60, b: 90, r: 20 },
+    }), plotConfig("area_distribution"));
   }
 
   // ------------------------------------------------------------------
@@ -860,6 +912,11 @@
     sel.innerHTML = available.map((k) => `<option value="${k}">${k}</option>`).join("");
     if (!available.includes(state.index)) state.index = available[0];
     sel.value = state.index;
+    updateSwatch();
+  }
+
+  function updateSwatch() {
+    $("index-swatch").style.background = `linear-gradient(to right, ${INDICES[state.index].palette.join(",")})`;
   }
 
   function setupDates() {
@@ -874,10 +931,12 @@
     state.end = wEnd;
     $("fecha-inicio").value = wStart;
     $("fecha-fin").value = wEnd;
-    $("window-note").textContent =
-      hStart < wStart
-        ? `Maps and polygons: ${wStart} to ${wEnd}. Plot time series: from ${hStart}.`
-        : `Data available: ${wStart} to ${wEnd}.`;
+    updateDateTexts();
+  }
+
+  function updateDateTexts() {
+    $("fecha-inicio-text").textContent = fmtDate($("fecha-inicio").value);
+    $("fecha-fin-text").textContent = fmtDate($("fecha-fin").value);
   }
 
   function onSensorChange() {
@@ -901,6 +960,7 @@
     $("sensor").onchange = onSensorChange;
     $("indice").onchange = (e) => {
       state.index = e.target.value;
+      updateSwatch();
       if (!$("info-pop").classList.contains("hidden")) renderInfoPop();
       updateRaster(); refreshAnalysis();
     };
@@ -910,11 +970,17 @@
       if (!a || !b) return;
       if (a > b) [a, b] = [b, a];
       state.start = a; state.end = b;
+      $("fecha-inicio").value = a; $("fecha-fin").value = b;
+      updateDateTexts();
       updateRaster();
       refreshAnalysis();
     };
     $("fecha-inicio").onchange = onDate;
     $("fecha-fin").onchange = onDate;
+    // Abrir el calendario al hacer clic en cualquier parte del campo
+    for (const id of ["fecha-inicio", "fecha-fin"]) {
+      $(id).addEventListener("click", (e) => { try { e.currentTarget.showPicker(); } catch { /* navegador sin showPicker */ } });
+    }
     document.querySelectorAll('input[name="chart-type"]').forEach((r) => {
       r.onchange = (e) => { state.chartType = e.target.value; refreshAnalysis(); };
     });
