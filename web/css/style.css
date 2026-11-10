@@ -1,0 +1,143 @@
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  color: #333;
+  background: #fff;
+}
+.hidden { display: none !important; }
+
+/* ---------- Layout  ---------- */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 5fr) 7fr;
+  gap: 20px;
+  padding: 20px;
+}
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+}
+.sidebar {
+  background: #f5f5f5;
+  border: 1px solid #e3e3e3;
+  border-radius: 4px;
+  padding: 19px;
+  align-self: start;
+}
+.help { margin: 0 0 15px; color: #343a40; }
+
+/* ---------- Botones ---------- */
+.btn {
+  background: #f8f9fa;
+  color: #000;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  white-space: nowrap;
+}
+.btn:hover { background: #e9ecef; }
+.btn-mode.active { background: #007bff; color: #fff; border-color: #0056b3; }
+.btn.flash { background: #dc3545; color: #fff; }
+.mode-buttons {
+  display: flex; flex-wrap: wrap; gap: 5px; justify-content: center;
+}
+.btn-info {
+  background: #007bff; color: #fff; border: none; border-radius: 50%;
+  width: 32px; height: 32px; font-size: 16px; font-weight: bold;
+  font-family: Georgia, serif; font-style: italic; cursor: pointer;
+  margin-left: 8px; flex-shrink: 0;
+}
+.btn-download { margin-top: 10px; width: 100%; }
+
+/* ---------- Campos ---------- */
+.field { margin-top: 15px; }
+.field label { display: block; font-weight: bold; margin-bottom: 5px; }
+select, input[type="date"] {
+  width: 100%; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px;
+  font-size: 14px; background: #fff;
+}
+.date-range { display: flex; align-items: center; gap: 6px; }
+.date-range span { color: #555; }
+.note { color: #6c757d; display: block; margin-top: 4px; }
+.index-row { display: flex; align-items: flex-end; }
+.index-row > div { flex: 1; }
+.check { display: block; margin: 15px 0 5px; cursor: pointer; }
+input[type="checkbox"], input[type="radio"] { accent-color: #007bff; }
+
+#info-lote {
+  background: #fff; border: 1px solid #ccc; border-radius: 4px;
+  padding: 9px; margin: 10px 0 0; white-space: pre-wrap; font-size: 13px;
+}
+
+/* ---------- Tabla ---------- */
+.table-wrap {
+  max-height: 450px; overflow-y: auto; border: 1px solid #ddd;
+  padding: 5px; margin-top: 10px; background: #fff;
+}
+table { border-collapse: collapse; width: 100%; }
+th, td { padding: 4px 8px; text-align: left; border-bottom: 1px solid #eee; }
+th { position: sticky; top: 0; background: #fff; }
+tr.global td { font-weight: bold; background: #f0f6ff; }
+
+/* ---------- Mapa ---------- */
+#map { height: 450px; border-radius: 4px; }
+.raster-overlay { image-rendering: pixelated; image-rendering: crisp-edges; }
+.legend {
+  background: rgba(255, 255, 255, 0.9); padding: 8px 10px; border-radius: 5px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.3); line-height: 18px; font-size: 12px;
+}
+.legend h4 { margin: 0 0 6px; font-size: 13px; }
+.legend i { width: 16px; height: 14px; float: left; margin-right: 6px; opacity: 0.8; }
+.legend .gradient { width: 20px; height: 120px; float: left; margin-right: 6px; border-radius: 2px; }
+.legend .gradient-labels { display: flex; flex-direction: column; justify-content: space-between; height: 120px; }
+.center-btn a { font-size: 18px; line-height: 30px; text-align: center; }
+
+/* ---------- Gráfico ---------- */
+#chart-container { position: relative; margin-top: 12px; padding-top: 52px; }
+#chart-toolbar {
+  position: absolute; left: 12px; top: 8px;
+  background: rgba(255,255,255,0.92); padding: 6px 10px; border-radius: 10px;
+  border: 1px solid #ddd; box-shadow: 0 1px 3px rgba(0,0,0,0.1); z-index: 1;
+  display: flex; gap: 14px; flex-wrap: wrap;
+}
+#chart-toolbar label { font-weight: 600; color: #444; cursor: pointer; }
+#chart { height: 420px; }
+.chart-empty {
+  position: absolute; inset: 52px 0 0 0; display: flex; align-items: center;
+  justify-content: center; color: #888; pointer-events: none;
+}
+
+/* ---------- Pantalla de carga  ---------- */
+#loading-screen {
+  position: fixed; inset: 0; background: rgba(255,255,255,0.8);
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
+  z-index: 9999;
+}
+#loading-text { margin-top: 8px; color: #555; font-size: 13px; }
+.spinner { display: flex; }
+.spinner div {
+  width: 12px; height: 12px; margin: 5px; background: #007bff; border-radius: 50%;
+  animation: bounce 1.5s infinite ease-in-out;
+}
+.spinner div:nth-child(2) { animation-delay: 0.2s; }
+.spinner div:nth-child(3) { animation-delay: 0.4s; }
+@keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+
+/* ---------- Modal ---------- */
+.modal {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center; z-index: 10000;
+}
+.modal-box {
+  background: #fff; border-radius: 6px; padding: 20px 24px; max-width: 480px; width: 90%;
+  box-shadow: 0 5px 15px rgba(0,0,0,.5);
+}
+.modal-box h3 { margin-top: 0; }
+.modal-box .btn { float: right; margin-top: 10px; }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #f1f1f1; }
+::-webkit-scrollbar-thumb { background: #888; border-radius: 3px; }
