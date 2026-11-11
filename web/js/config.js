@@ -27,7 +27,8 @@ const CONFIG = {
 // aggregate: cómo se combinan varias fechas en el mapa ("mean" o "modal")
 // smooth:   aplica Savitzky–Golay a la serie de tiempo 
 // name:     nombre completo que aparece en la tarjeta de información
-// domain:   rango fijo de colores del mapa [mín, máx].
+// domain:   rango fijo de colores del mapa [mín, máx]; lo que quede por fuera toma el color del extremo.
+//           También limita el eje Y de la serie de tiempo, que abarca como mínimo 1/4 de este rango
 const INDICES = {
   VCI: {
     name: "Vegetation Condition Index",
@@ -42,6 +43,7 @@ const INDICES = {
     display: "NDVI_class", analysis: "NDVI_raw", aggregate: "modal", smooth: true,
     palette: ["#d9230f", "#d45313", "#f2db29", "#9acd32", "#07a607", "#076907"],
     classes: ["Soil/Water", "Very Low", "Low", "Moderately Low", "Moderately High", "High"],
+    domain: [-1, 1], // rango del NDVI continuo (eje Y de la serie de tiempo)
     bins: range(-1, 1, 0.1),
     info: "An indicator of photosynthetically active biomass, used to analyze plant health and detect abnormal growth changes.",
   },
@@ -137,3 +139,4 @@ function range(from, to, step) {
   for (let i = 0; i <= n; i++) out.push(+(from + i * step).toFixed(6));
   return out;
 }
+
