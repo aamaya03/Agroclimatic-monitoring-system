@@ -810,6 +810,27 @@
     return { range: [shift(-3), shift(3)], dtick: 86400000 };
   }
 
+  // Eje Y de la serie de tiempo: centrado en los datos, pero nunca más estrecho que
+  // 1/4 del rango del índice, para que diferencias pequeñas no parezcan caídas fuertes.
+  // No pasa de los límites del índice, salvo que algún valor esté por fuera (no se esconde ningún punto).
+  const Y_MIN_SPAN = 0.25;
+  function yAxisRange(values) {
+    const cfg = INDICES[state.index];
+    if (state.index === "VCI") return { range: [0.7, 7.3], dtick: 1 }; // clases 1 a 7
+    const vals = values.filter((v) => Number.isFinite(v));
+    if (!cfg.domain || !vals.length) return {};
+    const [dLo, dHi] = cfg.domain;
+    const min = Math.min(...vals), max = Math.max(...vals);
+    const span = Math.max((dHi - dLo) * Y_MIN_SPAN, (max - min) * 1.15);
+    let lo = (min + max) / 2 - span / 2, hi = lo + span;
+    if (lo < dLo) { hi += dLo - lo; lo = dLo; }
+    if (hi > dHi) { lo -= hi - dHi; hi = dHi; }
+    lo = Math.min(Math.max(lo, dLo), min);
+    hi = Math.max(Math.min(hi, dHi), max);
+    const pad = (hi - lo) * 0.04; // aire para que los puntos del borde no queden cortados
+    return { range: [lo - pad, hi + pad] };
+  }
+
   function renderTimeSeries(series) {
     const valid = series.filter((s) => s.points.length);
     if (!valid.length) return chartEmpty(activeGeometries().length ? "No data in the selected date range." : "Select a plot or draw a polygon to see the chart.");
@@ -828,7 +849,7 @@
       hovermode: "x unified",
       title: { text: `Average ${state.index} by ${state.mode === "lote" ? "Plot" : "Area"}` },
       xaxis: { title: { text: "Date" }, type: "date", tickformat: "%b %d\n%Y", ...singleDateRange(valid) },
-      yaxis: { title: { text: `Average ${state.index}` }, zeroline: false },
+      yaxis: { title: { text: `Average ${state.index}` }, zeroline: false, ...yAxisRange(traces.flatMap((t) => t.y)) },
       legend: { title: { text: state.mode === "lote" ? "Plots" : "" } },
       margin: { t: 60, r: 20 },
     }), plotConfig());
