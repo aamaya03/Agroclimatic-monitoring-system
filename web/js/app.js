@@ -485,13 +485,14 @@
         legendHtml = `<h4>Categories ${state.index}</h4>` +
           cfg.classes.map((c, i) => `<div><i style="background:${cfg.palette[i]}"></i>${c}</div>`).join("");
       } else {
-        let min = Infinity, max = -Infinity;
-        for (const v of data) if (!Number.isNaN(v)) { if (v < min) min = v; if (v > max) max = v; }
+        // Rango fijo del índice (config.js): el mismo color significa siempre el mismo valor
+        let [min, max] = cfg.domain || [Infinity, -Infinity];
+        if (!cfg.domain) for (const v of data) if (!Number.isNaN(v)) { if (v < min) min = v; if (v > max) max = v; }
         colorOf = makeNumericPalette(cfg.palette, min, max);
         const grad = `linear-gradient(to top, ${cfg.palette.join(",")})`;
-        const mid = (min + max) / 2;
+        const ticks = [1, 0.75, 0.5, 0.25, 0].map((f) => +(min + (max - min) * f).toFixed(2));
         legendHtml = `<h4>${state.index}</h4><div class="gradient" style="background:${grad}"></div>` +
-          `<div class="gradient-labels"><span>${fmt(max, 2)}</span><span>${fmt(mid, 2)}</span><span>${fmt(min, 2)}</span></div>`;
+          `<div class="gradient-labels">${ticks.map((t) => `<span>${t}</span>`).join("")}</div>`;
       }
 
       const canvas = document.createElement("canvas");
@@ -1046,3 +1047,4 @@
 
   init();
 })();
+
