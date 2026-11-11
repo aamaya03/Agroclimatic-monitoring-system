@@ -27,6 +27,7 @@ const CONFIG = {
 // aggregate: cómo se combinan varias fechas en el mapa ("mean" o "modal")
 // smooth:   aplica Savitzky–Golay a la serie de tiempo 
 // name:     nombre completo que aparece en la tarjeta de información
+// domain:   rango fijo de colores del mapa [mín, máx].
 const INDICES = {
   VCI: {
     name: "Vegetation Condition Index",
@@ -48,6 +49,7 @@ const INDICES = {
     name: "Enhanced Vegetation Index",
     display: "EVI", analysis: "EVI", aggregate: "mean", smooth: false,
     palette: ["#d9230f", "#d45313", "#f2db29", "#9acd32", "#07a607", "#076907"],
+    domain: [0, 1], // rango fijo de la paleta y la leyenda
     bins: range(-1, 1, 0.1),
     info: "Measures canopy structure and vegetation vigor. It is optimized to better quantify greenness in areas of high biomass where NDVI may saturate.",
   },
@@ -55,6 +57,7 @@ const INDICES = {
     name: "Modified Soil-Adjusted Vegetation Index",
     display: "MSAVI", analysis: "MSAVI", aggregate: "mean", smooth: false,
     palette: ["#d9230f", "#d45313", "#f2db29", "#9acd32", "#07a607", "#076907"],
+    domain: [0, 1], // rango fijo de la paleta y la leyenda
     bins: range(0, 1, 0.1),
     info: "Measures vegetation greenness while minimizing the influence of bare soil. It provides a more accurate estimate of canopy cover in areas with sparse vegetation.",
   },
@@ -62,6 +65,7 @@ const INDICES = {
     name: "Green Normalized Difference Vegetation Index",
     display: "GNDVI", analysis: "GNDVI", aggregate: "mean", smooth: false,
     palette: ["#d9230f", "#d45313", "#f2db29", "#9acd32", "#07a607", "#076907"],
+    domain: [0, 1], // rango fijo de la paleta y la leyenda
     bins: range(-1, 1, 0.1),
     info: "Uses the green band to estimate chlorophyll content, making it effective for monitoring plant stress and nutrient status.",
   },
@@ -69,6 +73,7 @@ const INDICES = {
     name: "Leaf Area Index",
     display: "LAI", analysis: "LAI", aggregate: "mean", smooth: true,
     palette: ["#A0522D", "#F4A460", "#9ACD32", "#32CD32", "#228B22", "#004d00"],
+    domain: [0, 4], // rango fijo de la paleta y la leyenda
     bins: range(0, 4, 0.25), // La fórmula LAI = 3.618*EVI - 0.118 llega como máximo a ~3.5
     openTop: true,           // La última barra recoge todo lo mayor a 3.75 (nubes, artefactos)
     info: "Quantifies the amount of foliage in a canopy. It is used to estimate biomass and crop health.",
@@ -77,6 +82,7 @@ const INDICES = {
     name: "Green Chlorophyll Index",
     display: "GCI", analysis: "GCI", aggregate: "mean", smooth: true,
     palette: ["#A0522D", "#F4A460", "#9ACD32", "#32CD32", "#228B22", "#004d00"],
+    domain: [0, 10], // rango fijo de la paleta y la leyenda
     bins: range(0, 10, 1),
     info: "Estimates chlorophyll content in vegetation, helping to assess nutritional status.",
   },
@@ -85,6 +91,7 @@ const INDICES = {
     display: "NDWI", analysis: "NDWI", aggregate: "mean", smooth: true,
     // reverse = TRUE en app.R
     palette: ["#74b0d6", "#388a47", "#9fcf70", "#f5d856", "#d13415"],
+    domain: [-1, 1], // rango fijo de la paleta y la leyenda
     bins: range(-1, 1, 0.1),
     info: "Used to detect water bodies and moisture in vegetation.",
   },
